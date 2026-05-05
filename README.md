@@ -1,2 +1,2 @@
 # PythonModbusSlave
-Python Implementation of modbus slave with event notification support on embedded platforms
+Python based implementation of Modbus Protocol with ZMQ/ MqTT Event Notifications
