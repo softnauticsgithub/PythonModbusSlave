@@ -26,7 +26,10 @@ class RegisterMap():
         """
         for reg in self.registers:
             addr = reg["address"]
-            self.register_map[addr] = reg
+            length = reg.get("length", 1)
+            end_addr = addr + length - 1
+            for index in range(addr, end_addr + 1): 
+                self.register_map[index] = reg
 
         # Build ordered register list
         max_addr = max(self.register_map.keys())

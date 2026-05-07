@@ -23,6 +23,10 @@ class ConfigurableDataBlock(ModbusSequentialDataBlock):
         return True
 
     def setValues(self, address, values):
+        if not isinstance(values, list):
+            values = [values]
+
+        # TODO: Handle multi-register writes and reads (e.g. writing a 32-bit value across two 16-bit registers)
         for i, val in enumerate(values):
             reg_addr = address + i
             reg_info = self.reg_map.get(reg_addr)
@@ -31,12 +35,18 @@ class ConfigurableDataBlock(ModbusSequentialDataBlock):
                 access = reg_info.get("access", "rw")
 
                 if access == "r":
-                    raise Exception(f"Register {reg_addr} is READ-ONLY")
+                    #TODO: Program should not   crash if invalid write is attempted. Instead, it should log the error and ignore the write. 
+                    raise IllegalAddress(f"Register {reg_addr} is READ-ONLY")
 
         super().setValues(address, values)
         # TODO: Publish event with address and new values
         if self.event_callback: 
-            self.event_callback.publish("modbus/register_update", {"address": address, "values": values})
+            self.event_callback.publish({"address": address, "values": values})
+
+
+    def setValuesfromCentral(self, address, values):
+        # TODO: Implement pending logic to handle incoming updates from central system (e.g. via MQTT) and update the datastore accordingly. This may involve validating the incoming address and value, checking access permissions, and then updating the register values without triggering another event publication (to avoid infinite loops).
+        super().setValues(address, values)
 
     def getValues(self, address, count=1):
         for i in range(count):
@@ -47,7 +57,7 @@ class ConfigurableDataBlock(ModbusSequentialDataBlock):
                 access = reg_info.get("access", "rw")
 
                 if access == "w":
-                    raise Exception(f"Register {reg_addr} is WRITE-ONLY")
+                    raise IllegalAddress(f"Register {reg_addr} is WRITE-ONLY")
 
         return super().getValues(address, count)
     

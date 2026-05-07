@@ -3,28 +3,33 @@ registers:
     address: 0
     type: holding
     access: rw
+    length: 1
     default: 0
 
   - name: charging_state
     address: 1
     type: holding
     access: r
+    length: 1
     default: 0
 
   - name: current_limit
     address: 2
     type: holding
     access: rw
+    length: 1
     default: 16
 
   - name: voltage
     address: 3
     type: holding
     access: r
+    length: 1
     default: 230
 
   - name: fault_code
     address: 4
     type: holding
     access: r
+    length: 1
     default: 0

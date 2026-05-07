@@ -6,6 +6,7 @@ class IllegalFunction(ModbusException):
 
 class IllegalAddress(ModbusException):
     code = ExceptionCodes.IllegalAddress
+    
 
 class IllegalValue(ModbusException):
     code = ExceptionCodes.IllegalValue
