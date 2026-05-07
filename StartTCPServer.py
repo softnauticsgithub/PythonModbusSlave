@@ -5,7 +5,6 @@ from EventBus import EventBus
 from customDatastore import ConfigurableDataBlock
 from modbusRegisters import RegisterMap
 from mqttEventHandler import MQTTManager
-from zmqEventHandler import ZMQAdapter
 from config import MODBUS_HOST, MODBUS_PORT
 
 # Initialize register map and initial values
@@ -16,13 +15,12 @@ map_obj.setRegisters()
 event_bus = EventBus()
 
 # Register adapters
-zmq_adapter = ZMQAdapter()
+# TODO for now support with MQTT, can add more adapters like ZMQ in future
+#zmq_adapter = ZMQAdapter()
 mqtt_obj = MQTTManager()
+event_bus.register(mqtt_obj)
 
-
-event_bus.register(zmq_adapter)
-
-data_block = ConfigurableDataBlock(0, map_obj.register_initial_values, map_obj.register_map, event_callback=mqtt_obj)
+data_block = ConfigurableDataBlock(0, map_obj.register_initial_values, map_obj.register_map, event_callback=event_bus)
 mqtt_obj.attach_datastore(data_block)
 
 store = ModbusSlaveContext(
