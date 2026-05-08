@@ -15,6 +15,7 @@ class MQTTManager:
         self.datastore = None
         self.client.on_connect = self.on_connect
         self.client.on_message = self.on_message
+        self.client.on_disconnect = self.on_disconnect
 
     def attach_datastore(self, datastore):
         self.datastore = datastore
@@ -22,6 +23,9 @@ class MQTTManager:
     def on_connect(self, client, userdata, flags, rc):
         print(f"[MQTT] Connected: {rc}")
         client.subscribe(TOPIC_SUBSCRIBE)
+
+    def on_disconnect(self, client, userdata, rc):
+        print(f"[MQTT] Disconnected: {rc}")
 
     def on_message(self, client, userdata, msg):
         try:

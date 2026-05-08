@@ -18,13 +18,15 @@ event_bus = EventBus()
 # TODO for now support with MQTT, can add more adapters like ZMQ in future
 #zmq_adapter = ZMQAdapter()
 mqtt_obj = MQTTManager()
+mqtt_obj.start()
 event_bus.register(mqtt_obj)
 
 data_block = ConfigurableDataBlock(0, map_obj.register_initial_values, map_obj.register_map, event_callback=event_bus)
 mqtt_obj.attach_datastore(data_block)
 
 store = ModbusSlaveContext(
-    hr=data_block
+    hr=data_block,
+    zero_mode=True
 )
 
 context = ModbusServerContext(slaves=store, single=True)
@@ -36,4 +38,5 @@ identity.ProductName = "Charging_Controller"
 identity.MajorMinorRevision = "1.0"
 
 print(f"Starting Modbus TCP Server on port {MODBUS_PORT}...")
-StartTcpServer(context, identity=identity, address=(MODBUS_HOST, MODBUS_PORT))
+
+StartTcpServer(context=context, identity=identity, address=(MODBUS_HOST, MODBUS_PORT))

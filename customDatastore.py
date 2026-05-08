@@ -1,6 +1,7 @@
 from pymodbus.datastore import ModbusSequentialDataBlock
 from customExceptions import IllegalAddress
 
+# Follow Big-Endian format for multi-register values (e.g. 32-bit values across two 16-bit registers) to be consistent with common Modbus conventions and ensure compatibility with a wide range of Modbus clients and tools that expect this format. This means that the higher-order register will contain the most significant bits of the value, while the lower-order register will contain the least significant bits. For example, if we have a 32-bit value that we want to store across two registers, the first register (lower address) will hold the lower 16 bits of the value, and the second register (higher address) will hold the upper 16 bits of the value. This approach allows for easier integration with existing Modbus systems and ensures that our implementation adheres to widely accepted standards in the Modbus community.
 class ConfigurableDataBlock(ModbusSequentialDataBlock):
 
     def __init__(self, address, values, reg_map, event_callback=None):
@@ -13,12 +14,6 @@ class ConfigurableDataBlock(ModbusSequentialDataBlock):
         for i in range(count):
             reg_addr = address + i
             reg_info = self.reg_map.get(reg_addr)
-
-            if not reg_info:
-                raise IllegalAddress(f"Invalid address: {reg_addr}")
-
-            if reg_info.get("access") == "r":
-                raise IllegalAddress(f"Read-only register: {reg_addr}")
 
         return True
 
@@ -52,12 +47,9 @@ class ConfigurableDataBlock(ModbusSequentialDataBlock):
         for i in range(count):
             reg_addr = address + i
             reg_info = self.reg_map.get(reg_addr)
-
             if reg_info:
                 access = reg_info.get("access", "rw")
-
                 if access == "w":
                     raise IllegalAddress(f"Register {reg_addr} is WRITE-ONLY")
-
         return super().getValues(address, count)
     

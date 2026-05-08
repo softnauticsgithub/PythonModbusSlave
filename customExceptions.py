@@ -1,15 +1,13 @@
 from pymodbus.exceptions import ModbusException
-from pymodbus.constants import ExceptionCodes
 
 class IllegalFunction(ModbusException):
-    code = ExceptionCodes.IllegalFunction
+    pass
 
 class IllegalAddress(ModbusException):
-    code = ExceptionCodes.IllegalAddress
-    
+    pass
 
 class IllegalValue(ModbusException):
-    code = ExceptionCodes.IllegalValue
+    pass
 
 class DeviceFailure(ModbusException):
-    code = ExceptionCodes.SlaveFailure
+    pass

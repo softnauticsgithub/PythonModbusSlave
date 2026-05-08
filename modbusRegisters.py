@@ -1,4 +1,5 @@
 import yaml
+from helper import write_u32, read_u32
 
 with open("registerInfo.yml", "r") as f:
     config = yaml.safe_load(f)
@@ -26,16 +27,19 @@ class RegisterMap():
         """
         for reg in self.registers:
             addr = reg["address"]
-            length = reg.get("length", 1)
-            end_addr = addr + length - 1
-            for index in range(addr, end_addr + 1): 
-                self.register_map[index] = reg
+            self.register_map[addr] = reg
 
         # Build ordered register list
         max_addr = max(self.register_map.keys())
+        self.register_initial_values = [0] * (max_addr + 1)
 
-        for index in range(max_addr + 1):
-            if index in self.register_map:
-                self.register_initial_values.append(self.register_map[index].get("default", 0))
+        # TODO: Optimize this logic by adding type in yaml file for more standard way
+        for index, reg_info in self.register_map.items():
+            default = reg_info.get("default", 0)
+            length = reg_info.get("length", 1)
+            if length > 1:
+                self.register_initial_values[index:index + length] = write_u32(default)
             else:
-                self.register_initial_values.append(0)
+                self.register_initial_values[index] = default
+        print(f"Register Map: {self.register_map}")
+        print(f"Initial Values: {self.register_initial_values}")
