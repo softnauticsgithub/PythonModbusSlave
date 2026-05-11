@@ -1,0 +1,42 @@
+registers:
+  - name: charging_enable
+    address: 0
+    type: holding
+    access: rw
+    length: 1
+    default: 0
+
+  - name: charging_state
+    address: 1
+    type: holding
+    access: r
+    length: 1
+    default: 0
+
+  - name: current_limit
+    address: 2
+    type: holding
+    access: rw
+    length: 1
+    default: 16
+
+  - name: voltage
+    address: 3
+    type: holding
+    access: r
+    length: 2
+    default: 150
+
+  - name: current
+    address: 5
+    type: holding
+    access: r
+    length: 2
+    default: 200
+
+  - name: fault_code
+    address: 7
+    type: holding
+    access: r
+    length: 1
+    default: 0
