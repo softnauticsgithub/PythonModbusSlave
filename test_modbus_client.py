@@ -28,7 +28,7 @@ def run_modbus_client():
         # address: The starting register address (0-indexed)
         # count: Number of registers to read
         # slave: The Unit ID
-        response = client.read_holding_registers(address=3, count=2)
+        response = client.read_holding_registers(address=1, count=1)
 
         # 4. Handle Response
         if not response.isError():

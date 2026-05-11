@@ -1,7 +1,7 @@
 import json
 import asyncio
 import paho.mqtt.client as mqtt
-from config import MQTT_BROKER, MQTT_PORT, MQTT_SUBSCRIBE_TOPIC, MQTT_PUBLISH_TOPIC
+from config import MQTT_BROKER, MQTT_PORT, TOPIC_SUBSCRIBE, TOPIC_PUBLISH
 
 class AsyncMQTTClient:
 
@@ -10,8 +10,8 @@ class AsyncMQTTClient:
         broker=MQTT_BROKER,
         port=MQTT_PORT,
         client_id="modbus_service",
-        subscribe_topic=MQTT_SUBSCRIBE_TOPIC,
-        publish_topic=MQTT_PUBLISH_TOPIC
+        subscribe_topic=TOPIC_SUBSCRIBE,
+        publish_topic=TOPIC_PUBLISH
     ):
         """
         Async MQTT Client to handle communication with central engine.
@@ -21,7 +21,7 @@ class AsyncMQTTClient:
         :param subscribe_topic: Topic to subscribe to
         :param publish_topic: Topic to publish to
         """
-        
+        self.datastore = None
         self.broker = broker
         self.port = port
         self.subscribe_topic = subscribe_topic
@@ -41,6 +41,9 @@ class AsyncMQTTClient:
         self.client.on_message = self._on_message
         self.running = False
 
+
+    def attach_datastore(self, datastore):
+        self.datastore = datastore
 
     def _on_connect(
         self,
@@ -89,6 +92,8 @@ class AsyncMQTTClient:
                 ),
                 self.loop
             )
+        except json.JSONDecodeError as e:
+            print(f"[INVALID JSON] {e}")
         except Exception as e:
             print(f"[MQTT ERROR] {e}")
 
@@ -112,13 +117,15 @@ class AsyncMQTTClient:
         """
         Async loop to process incoming MQTT messages from the queue.
         """
-
-        while self.running:
-            topic, payload = await self.message_queue.get()
-            await self.handle_message(
-                topic,
-                payload
-            )
+        try:
+            while self.running:
+                topic, payload = await self.message_queue.get()
+                await self.handle_message(
+                    topic,
+                    payload
+                )
+        except asyncio.CancelledError:
+            print("[MQTT] Message loop cancelled")
 
     async def handle_message(
         self,
@@ -131,6 +138,14 @@ class AsyncMQTTClient:
         print(
             f"[ENGINE -> DEVICE] {topic} -> {payload}"
         )
+        if self.datastore:
+            address = int(payload.get("address"))
+            value = int(payload.get("value"))
+            print(f"Updating address {address} with value {value}")
+            self.datastore.setValuesfromCentral(
+                address,
+                [value]
+            )
         #TODO: Implement command handling logic based on payload content
         # For example, you can check for specific commands and perform actions accordingly
 
@@ -162,26 +177,3 @@ class AsyncMQTTClient:
         self.client.loop_stop()
         self.client.disconnect()
         print("[MQTT] Stopped")
-
-
-
-async def main():
-
-    mqtt_client = AsyncMQTTClient(
-
-        client_id="modbus_service",
-
-        subscribe_topic="device/modbus/in",
-
-        publish_topic="device/modbus/out"
-    )
-
-    await asyncio.gather(
-
-        mqtt_client.start()
-    )
-
-
-if __name__ == "__main__":
-
-    asyncio.run(main())

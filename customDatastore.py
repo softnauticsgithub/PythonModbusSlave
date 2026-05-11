@@ -39,9 +39,9 @@ class ConfigurableDataBlock(ModbusSequentialDataBlock):
             await self.event_callback.publish({"address": address, "values": values})
 
 
-    async def setValuesfromCentral(self, address, values):
+    def setValuesfromCentral(self, address, values):
         # TODO: Implement pending logic to handle incoming updates from central system (e.g. via MQTT) and update the datastore accordingly. This may involve validating the incoming address and value, checking access permissions, and then updating the register values without triggering another event publication (to avoid infinite loops).
-        await super().setValues(address, values)
+        super().setValues(address, values)
 
     def getValues(self, address, count=1):
         for i in range(count):

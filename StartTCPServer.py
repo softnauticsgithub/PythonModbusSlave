@@ -64,15 +64,36 @@ async def start_modbus_server(mqtt_obj, event_bus):
 
 async def main():
     """
-    Main entry point to start the Modbus TCP server and MQTT handler."""
+    Main entry point to start the Modbus TCP server and MQTT handler.
+    """
     #1. MQTT Handler
     mqtt_obj, event_bus = register_mqtt_handler()
 
-    #5. Run the Modbus TCP server and MQTT handler concurrently
-    asyncio.gather(
-        start_modbus_server(mqtt_obj, event_bus),
+    mqtt_task = asyncio.create_task(
         mqtt_obj.start()
     )
+
+    modbus_task = asyncio.create_task(
+        start_modbus_server(mqtt_obj, event_bus)
+    )
+
+    tasks = [
+        mqtt_task,
+        modbus_task
+    ]
+
+    try:
+        #5. Run the Modbus TCP server and MQTT handler concurrently
+        await asyncio.gather(*tasks)
+    except asyncio.CancelledError:
+        print("[MAIN] Cancelled")
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(
+            *tasks,
+            return_exceptions=True
+        )
 
 if __name__ == "__main__":
     asyncio.run(main())
