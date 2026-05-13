@@ -1,8 +1,10 @@
 import yaml
 from helper import write_u32, read_u32
+from config import APP_NAME
 import logging
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(APP_NAME)
+
 
 with open("registerInfo.yml", "r") as f:
     config = yaml.safe_load(f)

@@ -2,9 +2,9 @@ import json
 import asyncio
 import logging
 import paho.mqtt.client as mqtt
-from config import MQTT_BROKER, MQTT_PORT, TOPIC_SUBSCRIBE, TOPIC_PUBLISH
+from config import MQTT_BROKER, MQTT_PORT, TOPIC_SUBSCRIBE, TOPIC_PUBLISH, APP_NAME
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(APP_NAME)
 
 class AsyncMQTTClient:
 

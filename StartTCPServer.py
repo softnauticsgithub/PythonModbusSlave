@@ -1,4 +1,6 @@
 import asyncio
+import logging
+from multiprocessing.util import LOGGER_NAME
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 from pymodbus.device import ModbusDeviceIdentification
 from EventBus import EventBus
@@ -10,6 +12,7 @@ from customLogger import setup_logger
 from pymodbus.server import StartAsyncTcpServer
 
 logger = setup_logger()
+
 
 def register_mapping():
     """
