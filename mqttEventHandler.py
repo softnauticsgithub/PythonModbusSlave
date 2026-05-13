@@ -3,13 +3,16 @@ import asyncio
 import logging
 import paho.mqtt.client as mqtt
 from config import MQTT_BROKER, MQTT_PORT, TOPIC_SUBSCRIBE, TOPIC_PUBLISH, APP_NAME
+from parseMessages import parseMessage
 
 logger = logging.getLogger(APP_NAME)
+logger.setLevel(logging.DEBUG)
 
 class AsyncMQTTClient:
 
     def __init__(
         self,
+        datastore=None,
         broker=MQTT_BROKER,
         port=MQTT_PORT,
         client_id="modbus_service",
@@ -24,7 +27,8 @@ class AsyncMQTTClient:
         :param subscribe_topic: Topic to subscribe to
         :param publish_topic: Topic to publish to
         """
-        self.datastore = None
+        self.datastore = datastore
+        logger.debug(f"MQTT Client initialized with datastore: {self.datastore}")
         self.broker = broker
         self.port = port
         self.subscribe_topic = subscribe_topic
@@ -43,10 +47,6 @@ class AsyncMQTTClient:
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
         self.running = False
-
-
-    def attach_datastore(self, datastore):
-        self.datastore = datastore
 
     def _on_connect(
         self,
@@ -138,17 +138,14 @@ class AsyncMQTTClient:
         """
         Messages received from central engine
         """
+        
+        logger.debug(f"Processing MQTT message ...{self.datastore}")
         logger.info(
             f"[ENGINE -> DEVICE] {topic} -> {payload}"
         )
         if self.datastore:
-            address = int(payload.get("address"))
-            value = int(payload.get("value"))
-            logger.info(f"Updating address {address} with value {value}")
-            self.datastore.setValuesfromCentral(
-                address,
-                [value]
-            )
+            logger.debug("Processing message ...")
+            await parseMessage(payload, self.datastore)
         #TODO: Implement command handling logic based on payload content
         # For example, you can check for specific commands and perform actions accordingly
 

@@ -14,47 +14,34 @@ from pymodbus.server import StartAsyncTcpServer
 logger = setup_logger()
 
 
-def register_mapping():
+def configure_datablock():
     """
-    Function to define the register mapping and initial values for the Modbus server."""
-    # Define register mapping and initial values
-    # Initialize register map and initial values
+    Function to configure the Modbus data block with the register mapping and initial values.
+    """
     map_obj = RegisterMap()
     map_obj.setRegisters()
-    return map_obj
-
-def register_mqtt_handler():
-    """
-    Function to initialize and start the MQTT handler.
-    """
-    # Create EventBus
     event_bus = EventBus()
-    mqtt_obj = AsyncMQTTClient()
-    event_bus.register(mqtt_obj)
-    return mqtt_obj, event_bus
-
-def configure_datastore(mqtt_obj, event_bus):
-    """
-    Function to configure the Modbus datastore with the register mapping and MQTT event handling.
-    """
-    map_obj = register_mapping()
     data_block = ConfigurableDataBlock(0, map_obj.register_initial_values, map_obj.register_map, event_callback=event_bus)
-    mqtt_obj.attach_datastore(data_block)
     store = ModbusSlaveContext(
         hr=data_block,
         zero_mode=True
     )
-    return store
+    return data_block, store, event_bus   
+
+def register_mqtt_handler(event_bus, data_block=None):
+    """
+    Function to initialize and start the MQTT handler.
+    """
+    mqtt_obj = AsyncMQTTClient(datastore=data_block)
+    event_bus.register(mqtt_obj)
+    return mqtt_obj, event_bus
 
 
-async def start_modbus_server(mqtt_obj, event_bus):
+async def start_modbus_server(store):
     """
     Main function to set up and start the Modbus TCP server with MQTT integration.
     """
 
-    #2. Configure Modbus Datastore with MQTT event handling
-    store = configure_datastore(mqtt_obj, event_bus)
-    
     #3. Start Modbus TCP Server
     context = ModbusServerContext(slaves=store, single=True)
     identity = ModbusDeviceIdentification()
@@ -72,15 +59,18 @@ async def main():
     """
     Main entry point to start the Modbus TCP server and MQTT handler.
     """
+    # 1. Initialize the data block and register map
+    data_block, store, event_bus = configure_datablock()
+
     #1. MQTT Handler
-    mqtt_obj, event_bus = register_mqtt_handler()
+    mqtt_obj, event_bus = register_mqtt_handler(event_bus, data_block)
 
     mqtt_task = asyncio.create_task(
         mqtt_obj.start()
     )
 
     modbus_task = asyncio.create_task(
-        start_modbus_server(mqtt_obj, event_bus)
+        start_modbus_server(store)
     )
 
     tasks = [

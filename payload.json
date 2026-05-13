@@ -1,0 +1,27 @@
+{
+  "timestamp": "2026-05-13T16:20:00Z",
+  "origin": {
+    "service": "BLE"
+  },
+  "source": {
+    "service": "router"
+  },
+  "destination": {
+    "service": "modbus_slave"
+  },
+  "event": {
+    "type": "update"
+  },
+  "payload": 
+  [
+    {
+    "key": "voltage",
+    "value": 700000,
+    "unit": "mV"
+    },
+    {
+    "key": "EVSEState",
+    "value": 2
+    }
+ ]
+}

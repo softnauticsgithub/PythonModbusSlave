@@ -29,7 +29,7 @@ def setup_logger():
     # ROOT LOGGER
     # -------------------------------------------------
     logger = logging.getLogger(APP_NAME)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
 
     # Avoid duplicate handlers
     if logger.handlers:
@@ -39,7 +39,7 @@ def setup_logger():
     # CONSOLE HANDLER
     # -------------------------------------------------
     console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.INFO)
+    console_handler.setLevel(logging.DEBUG)
     console_handler.setFormatter(formatter)
 
     # Add console handler to the logger
@@ -54,7 +54,7 @@ def setup_logger():
         backupCount=3,
         encoding="utf-8"
     )
-    file_handler
+    file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)
     # Add file handler to the logger
     logger.addHandler(file_handler)
