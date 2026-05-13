@@ -1,5 +1,8 @@
 import yaml
 from helper import write_u32, read_u32
+import logging
+
+logger = logging.getLogger(__name__)
 
 with open("registerInfo.yml", "r") as f:
     config = yaml.safe_load(f)
@@ -41,5 +44,5 @@ class RegisterMap():
                 self.register_initial_values[index:index + length] = write_u32(default)
             else:
                 self.register_initial_values[index] = default
-        print(f"Register Map: {self.register_map}")
-        print(f"Initial Values: {self.register_initial_values}")
+        logger.info(f"Register Map: {self.register_map}")
+        logger.info(f"Initial Values: {self.register_initial_values}")

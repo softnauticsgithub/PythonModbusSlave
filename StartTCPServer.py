@@ -6,7 +6,10 @@ from customDatastore import ConfigurableDataBlock
 from modbusRegisters import RegisterMap
 from mqttEventHandler import AsyncMQTTClient
 from config import MODBUS_HOST, MODBUS_PORT
+from customLogger import setup_logger
 from pymodbus.server import StartAsyncTcpServer
+
+logger = setup_logger()
 
 def register_mapping():
     """
@@ -56,8 +59,8 @@ async def start_modbus_server(mqtt_obj, event_bus):
     identity.ProductCode = "EVCS"
     identity.ProductName = "Charging_Controller"
     identity.MajorMinorRevision = "1.0"
-    print("Activate the Modbus Subscriber to see the MQTT events being published based on Modbus register changes...")
-    print(f"Starting Modbus TCP Server on port {MODBUS_PORT}...")
+    logger.info("Activate the Modbus Subscriber to see the MQTT events being published based on Modbus register changes...")
+    logger.info(f"Starting Modbus TCP Server on port {MODBUS_PORT}...")
     
     #4. Start the Modbus TCP server
     await StartAsyncTcpServer(context=context, identity=identity, address=(MODBUS_HOST, MODBUS_PORT))
@@ -86,7 +89,7 @@ async def main():
         #5. Run the Modbus TCP server and MQTT handler concurrently
         await asyncio.gather(*tasks)
     except asyncio.CancelledError:
-        print("[MAIN] Cancelled")
+        logger.error("[MAIN] Cancelled")
     finally:
         for task in tasks:
             task.cancel()

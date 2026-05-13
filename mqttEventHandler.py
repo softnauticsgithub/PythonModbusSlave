@@ -1,7 +1,10 @@
 import json
 import asyncio
+import logging
 import paho.mqtt.client as mqtt
 from config import MQTT_BROKER, MQTT_PORT, TOPIC_SUBSCRIBE, TOPIC_PUBLISH
+
+logger = logging.getLogger(__name__)
 
 class AsyncMQTTClient:
 
@@ -55,11 +58,11 @@ class AsyncMQTTClient:
         """
         Callback for MQTT connection event.
         """
-        print(f"[MQTT] Connected: {rc}")
+        logger.info(f"[MQTT] Connected: {rc}")
         client.subscribe(
             self.subscribe_topic
         )
-        print(
+        logger.info(
             f"[MQTT SUB] "
             f"{self.subscribe_topic}"
         )
@@ -79,7 +82,7 @@ class AsyncMQTTClient:
             payload = json.loads(
                 msg.payload.decode()
             )
-            print(
+            logger.info(
                 f"[MQTT RX] "
                 f"{topic} -> {payload}"
             )
@@ -93,9 +96,9 @@ class AsyncMQTTClient:
                 self.loop
             )
         except json.JSONDecodeError as e:
-            print(f"[INVALID JSON] {e}")
+            logger.error(f"[INVALID JSON] {e}")
         except Exception as e:
-            print(f"[MQTT ERROR] {e}")
+            logger.error(f"[MQTT ERROR] {e}")
 
     async def start(self):
         """
@@ -109,7 +112,7 @@ class AsyncMQTTClient:
         )
         # Start paho internal thread
         self.client.loop_start()
-        print("[MQTT] Loop Started")
+        logger.info("[MQTT] Loop Started")
         # Start processing messages
         await self._message_loop()
 
@@ -125,7 +128,7 @@ class AsyncMQTTClient:
                     payload
                 )
         except asyncio.CancelledError:
-            print("[MQTT] Message loop cancelled")
+            logger.error("[MQTT] Message loop cancelled")
 
     async def handle_message(
         self,
@@ -135,13 +138,13 @@ class AsyncMQTTClient:
         """
         Messages received from central engine
         """
-        print(
+        logger.info(
             f"[ENGINE -> DEVICE] {topic} -> {payload}"
         )
         if self.datastore:
             address = int(payload.get("address"))
             value = int(payload.get("value"))
-            print(f"Updating address {address} with value {value}")
+            logger.info(f"Updating address {address} with value {value}")
             self.datastore.setValuesfromCentral(
                 address,
                 [value]
@@ -166,7 +169,7 @@ class AsyncMQTTClient:
             payload
         )
 
-        print(
+        logger.info(
             f"[MQTT PUB] "
             f"{self.publish_topic} -> "
             f"{payload}"
@@ -176,4 +179,4 @@ class AsyncMQTTClient:
         self.running = False
         self.client.loop_stop()
         self.client.disconnect()
-        print("[MQTT] Stopped")
+        logger.info("[MQTT] Stopped")

@@ -19,10 +19,10 @@ def run_modbus_client():
         # 2. Establish connection
         connection = client.connect()
         if not connection:
-            print(f"Unable to connect to {SERVER_IP}:{PORT}")
+            logging.error(f"Unable to connect to {SERVER_IP}:{PORT}")
             return
 
-        print("Connected successfully!")
+        logging.info("Connected successfully!")
 
         # 3. Read Holding Registers
         # address: The starting register address (0-indexed)
@@ -32,17 +32,17 @@ def run_modbus_client():
 
         # 4. Handle Response
         if not response.isError():
-            print(f"Register Values: {response.registers}")
+            logging.info(f"Register Values: {response.registers}")
         else:
-            print(f"Error reading registers: {response}")
+            logging.error(f"Error reading registers: {response}")
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logging.error(f"An error occurred: {e}")
 
     finally:
         # 5. Always close the connection
         client.close()
-        print("Connection closed.")
+        logging.info("Connection closed.")
 
 if __name__ == "__main__":
     run_modbus_client()
