@@ -1,3 +1,9 @@
+"""
+Custom logger setup for the Modbus slave application.
+This module configures a logger that outputs to both the console and a rotating file, with a consistent format for log messages.
+The logger is designed to be used throughout the application for standardized logging of events, errors, and other relevant information.
+"""
+
 import logging
 import os
 from logging.handlers import RotatingFileHandler
@@ -22,7 +28,7 @@ def setup_logger():
             "%(filename)s:%(lineno)d | "
             "%(message)s"
         ),
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # -------------------------------------------------
@@ -49,10 +55,7 @@ def setup_logger():
     # FILE HANDLER
     # -------------------------------------------------
     file_handler = RotatingFileHandler(
-        filename=LOG_PATH,
-        maxBytes=5 * 1024 * 1024,
-        backupCount=3,
-        encoding="utf-8"
+        filename=LOG_PATH, maxBytes=5 * 1024 * 1024, backupCount=3, encoding="utf-8"
     )
     file_handler.setLevel(logging.DEBUG)
     file_handler.setFormatter(formatter)

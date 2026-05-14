@@ -1,3 +1,6 @@
+"""
+Module for parsing messages received from the central engine and updating the Modbus registers accordingly.
+"""
 import logging
 from config import APP_NAME
 from helper import write_u32
@@ -5,31 +8,28 @@ from helper import write_u32
 logger = logging.getLogger(APP_NAME)
 logger.setLevel(logging.DEBUG)
 
-async def parseMessage(message = None, datastore = None):
+async def parseMessage(message=None, datastore=None):
     """
     Parses a message and extracts relevant information.
     Args:
         message (str): The message to be parsed.
         datastore: The datastore to update with parsed values.
     """
-    logger.debug(f"Parsing message: {message}")
+    logger.debug("Parsing message: %s", message)
     if message:
         # Process the message
-        event_type = message.get("event",{}).get("type")
+        event_type = message.get("event", {}).get("type")
         if event_type == "update":
-            logger.info(f"Received telemetry update: {message}")
+            logger.info("Received telemetry update: %s", message)
             timestamp = message.get("timestamp")
-            logger.debug(f"Event Received at timestamp: {timestamp}")
-            logger.debug(f"Message Originated from: {message.get('origin').get('service')}")
-            logger.debug(f"Message Routed from: {message.get('source').get('service')}")
-            payloads = message.get("payload",[])
+            logger.debug("Event Received at timestamp: %s", timestamp)
+            logger.debug("Message Originated from: %s", message.get('origin').get('service'))
+            logger.debug("Message Routed from: %s", message.get('source').get('service'))
+            payloads = message.get("payload", [])
             for item in payloads:
-                update_register(
-                    item,
-                    datastore
-                )
+                update_register(item, datastore)
         else:
-            logger.warning(f"Received unsupported event type: {event_type}, Message: {message}")
+            logger.warning("Received unsupported event type: %s, Message: %s", event_type, message)
         return
     else:
         logger.error("Received empty message payload")
@@ -39,7 +39,7 @@ async def parseMessage(message = None, datastore = None):
 def update_register(payload, datastore):
     """
     Updates the Modbus register based on the provided payload.
-    Args:    
+    Args:
         payload (dict): The payload containing the key and value to update.
         datastore: The datastore to update with the new values.
     """
@@ -47,18 +47,15 @@ def update_register(payload, datastore):
     value = payload.get("value")
     modbus_mappping = datastore.reg_map
     reg_info = None
-    logger.debug(f"Attempting to find mapping for key={key} in register map")
+    logger.debug("Attempting to find mapping for key=%s in register map", key)
     for address, parameter in modbus_mappping.items():
         if parameter.get("name") == key:
             reg_info = parameter
-            logger.debug(f"Found mapping for key={key}")
+            logger.debug("Found mapping for key=%s", key)
             break
 
     if not reg_info:
-        logger.debug(
-            f"[WARN] "
-            f"No mapping for key={key}"
-        )
+        logger.warning("[WARN] No mapping for key=%s", key)
         return
 
     address = reg_info.get("address")
@@ -66,22 +63,8 @@ def update_register(payload, datastore):
 
     if length > 1:
         reg1, reg2 = write_u32(value)
-        datastore.setValuesfromCentral(
-            address,
-            [reg1, reg2]
-        )
-        logger.debug(
-            f"[MODBUS] "
-            f"{key}={value} "
-            f"-> [{address},{address+1}]"
-        )
+        datastore.set_values_from_central_engine(address, [reg1, reg2])
+        logger.debug("[MODBUS] %s=%s -> [%s,%s]", key, value, address, address + 1)
     else:
-        datastore.setValuesfromCentral(
-            address,
-            [value]
-        )
-        logger.debug(
-            f"[MODBUS] "
-            f"{key}={value} "
-            f"-> [{address}]"
-        )
+        datastore.set_values_from_central_engine(address, [value])
+        logger.debug("[MODBUS] %s=%s -> [%s]", key, value, address)
