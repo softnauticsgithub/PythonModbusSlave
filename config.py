@@ -1,3 +1,7 @@
+"""
+Configuration file for the Modbus application.
+Defines constants for MQTT, Modbus, and logging settings."""
+
 # MQTT
 MQTT_BROKER = "localhost"
 MQTT_PORT = 1883
@@ -9,7 +13,7 @@ TOPIC_PUBLISH = "device/modbus/out"
 MODBUS_HOST = "0.0.0.0"
 MODBUS_PORT = 5020
 
-#logs
+# logs
 LOG_DIR = "logs"
 LOG_FILE = "modbus_app.log"
 APP_NAME = "ModbusApplication"
