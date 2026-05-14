@@ -63,8 +63,8 @@ def update_register(payload, datastore):
 
     if length > 1:
         reg1, reg2 = write_u32(value)
-        datastore.setValuesfromCentralengine(address, [reg1, reg2])
+        datastore.set_values_from_central_engine(address, [reg1, reg2])
         logger.debug("[MODBUS] %s=%s -> [%s,%s]", key, value, address, address + 1)
     else:
-        datastore.setValuesfromCentralengine(address, [value])
+        datastore.set_values_from_central_engine(address, [value])
         logger.debug("[MODBUS] %s=%s -> [%s]", key, value, address)
