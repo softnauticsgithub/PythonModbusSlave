@@ -6,14 +6,14 @@ registers:
     length: 1
     default: 0
 
-  - name: charging_state
+  - name: EVSEState
     address: 1
     type: holding
-    access: r
+    access: rw
     length: 1
     default: 0
 
-  - name: current_limit
+  - name: power_relay
     address: 2
     type: holding
     access: rw

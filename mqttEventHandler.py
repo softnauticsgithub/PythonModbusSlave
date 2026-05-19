@@ -1,17 +1,30 @@
+"""
+Async MQTT Client implementation.
+"""
 import json
 import asyncio
+import logging
 import paho.mqtt.client as mqtt
-from config import MQTT_BROKER, MQTT_PORT, MQTT_SUBSCRIBE_TOPIC, MQTT_PUBLISH_TOPIC
+from config import MQTT_BROKER, MQTT_PORT, TOPIC_SUBSCRIBE, TOPIC_PUBLISH, APP_NAME
+from parseMessages import parseMessage
+
+logger = logging.getLogger(APP_NAME)
+logger.setLevel(logging.DEBUG)
+
 
 class AsyncMQTTClient:
+    """
+    Async MQTT Client to handle communication with central engine.
+    """
 
     def __init__(
         self,
+        datastore=None,
         broker=MQTT_BROKER,
         port=MQTT_PORT,
         client_id="modbus_service",
-        subscribe_topic=MQTT_SUBSCRIBE_TOPIC,
-        publish_topic=MQTT_PUBLISH_TOPIC
+        subscribe_topic=TOPIC_SUBSCRIBE,
+        publish_topic=TOPIC_PUBLISH,
     ):
         """
         Async MQTT Client to handle communication with central engine.
@@ -21,7 +34,14 @@ class AsyncMQTTClient:
         :param subscribe_topic: Topic to subscribe to
         :param publish_topic: Topic to publish to
         """
-        
+        self.datastore = datastore
+        self.config = {
+            'broker': broker,
+            'port': port,
+            'subscribe_topic': subscribe_topic,
+            'publish_topic': publish_topic,
+        }
+        logger.debug("MQTT Client initialized with datastore: %s", self.datastore)
         self.broker = broker
         self.port = port
         self.subscribe_topic = subscribe_topic
@@ -34,77 +54,44 @@ class AsyncMQTTClient:
         self.message_queue = asyncio.Queue()
 
         # MQTT client
-        self.client = mqtt.Client(
-            client_id=client_id
-        )
+        self.client = mqtt.Client(client_id=client_id)
         self.client.on_connect = self._on_connect
         self.client.on_message = self._on_message
         self.running = False
 
-
-    def _on_connect(
-        self,
-        client,
-        userdata,
-        flags,
-        rc
-    ):
+    def _on_connect(self, client, userdata, flags, rc):
         """
         Callback for MQTT connection event.
         """
-        print(f"[MQTT] Connected: {rc}")
-        client.subscribe(
-            self.subscribe_topic
-        )
-        print(
-            f"[MQTT SUB] "
-            f"{self.subscribe_topic}"
-        )
+        logger.info("[MQTT] Connected: %s", rc)
+        client.subscribe(self.subscribe_topic)
+        logger.info("[MQTT SUB] %s", self.subscribe_topic)
 
-    def _on_message(
-        self,
-        client,
-        userdata,
-        msg
-    ):
+    def _on_message(self, client, userdata, msg):
         """
         Callback for MQTT message event.
         """
-        
+
         try:
             topic = msg.topic
-            payload = json.loads(
-                msg.payload.decode()
-            )
-            print(
-                f"[MQTT RX] "
-                f"{topic} -> {payload}"
-            )
-
+            payload = json.loads(msg.payload.decode())
+            logger.info("[MQTT RX] %s -> %s", topic, payload)
             # Push into asyncio queue
-            asyncio.run_coroutine_threadsafe(
-
-                self.message_queue.put(
-                    (topic, payload)
-                ),
-                self.loop
-            )
+            asyncio.run_coroutine_threadsafe(self.message_queue.put((topic, payload)), self.loop)
+        except json.JSONDecodeError as e:
+            logger.error("[INVALID JSON] %s", e)
         except Exception as e:
-            print(f"[MQTT ERROR] {e}")
+            logger.error("[MQTT ERROR] %s", e)
 
     async def start(self):
         """
         Start the MQTT client and processing loop.
         """
         self.running = True
-        self.client.connect(
-            self.broker,
-            self.port,
-            60
-        )
+        self.client.connect(self.broker, self.port, 60)
         # Start paho internal thread
         self.client.loop_start()
-        print("[MQTT] Loop Started")
+        logger.info("[MQTT] Loop Started")
         # Start processing messages
         await self._message_loop()
 
@@ -112,76 +99,41 @@ class AsyncMQTTClient:
         """
         Async loop to process incoming MQTT messages from the queue.
         """
+        try:
+            while self.running:
+                topic, payload = await self.message_queue.get()
+                await self.handle_message(topic, payload)
+        except asyncio.CancelledError:
+            logger.error("[MQTT] Message loop cancelled")
 
-        while self.running:
-            topic, payload = await self.message_queue.get()
-            await self.handle_message(
-                topic,
-                payload
-            )
-
-    async def handle_message(
-        self,
-        topic,
-        payload
-    ):
+    async def handle_message(self, topic, payload):
         """
         Messages received from central engine
         """
-        print(
-            f"[ENGINE -> DEVICE] {topic} -> {payload}"
-        )
-        #TODO: Implement command handling logic based on payload content
+
+        logger.debug("Processing MQTT message ...%s", self.datastore)
+        logger.info("[ENGINE -> DEVICE] %s -> %s", topic, payload)
+        if self.datastore:
+            logger.debug("Processing message ...")
+            await parseMessage(payload, self.datastore)
+        # TODO: Implement command handling logic based on payload content
         # For example, you can check for specific commands and perform actions accordingly
 
-
-    async def publish(
-        self,
-        payload
-    ):
+    async def publish(self, payload):
         """
         Publish messages to central engine.
         :param payload: Dictionary representing the message payload
         """
         if isinstance(payload, dict):
             payload = json.dumps(payload)
-
-        self.client.publish(
-            self.publish_topic,
-            payload
-        )
-
-        print(
-            f"[MQTT PUB] "
-            f"{self.publish_topic} -> "
-            f"{payload}"
-        )
+        self.client.publish(self.publish_topic, payload)
+        logger.info("[MQTT PUB] %s -> %s", self.publish_topic, payload)
 
     async def stop(self):
+        """
+        Stop the MQTT client and cleanup resources.
+        """
         self.running = False
         self.client.loop_stop()
         self.client.disconnect()
-        print("[MQTT] Stopped")
-
-
-
-async def main():
-
-    mqtt_client = AsyncMQTTClient(
-
-        client_id="modbus_service",
-
-        subscribe_topic="device/modbus/in",
-
-        publish_topic="device/modbus/out"
-    )
-
-    await asyncio.gather(
-
-        mqtt_client.start()
-    )
-
-
-if __name__ == "__main__":
-
-    asyncio.run(main())
+        logger.info("[MQTT] Stopped")

@@ -1,4 +1,10 @@
+"""
+Helper functions for handling multi-register values in Modbus communication.
+This module provides utility functions to write and read 32-bit unsigned integer values across two 16-bit Modbus registers, following the Big-Endian format commonly used in Modbus implementations.
+"""
+
 import struct
+
 
 def write_u32(value):
     """
@@ -10,6 +16,7 @@ def write_u32(value):
     regs = struct.unpack(">HH", packed)
     return regs
 
+
 def read_u32(regs):
     """
     Helper function to read a 32-bit unsigned integer value from two 16-bit Modbus registers.
@@ -19,4 +26,5 @@ def read_u32(regs):
     packed = struct.pack(">HH", *regs)
     return struct.unpack(">I", packed)[0]
 
-#TODO: Need to add Support for Float values across multiple registers as well (e.g. 32-bit float across two 16-bit registers)
+
+# TODO: Need to add Support for Float values across multiple registers as well (e.g. 32-bit float across two 16-bit registers)

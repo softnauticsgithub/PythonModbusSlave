@@ -1,4 +1,13 @@
+"""
+EventBus module to manage and publish events to registered adapters.
+This module defines an EventBus class that allows for registering adapters and publishing events to them.
+"""
+
+
 class EventBus:
+    """
+    Class representing an event bus to manage and publish events to registered adapters."""
+
     def __init__(self):
         """
         Class representing an event bus to manage and publish events to registered adapters.
@@ -11,8 +20,6 @@ class EventBus:
         :param adapter: An instance of an adapter that implements a publish method.
         """
         self.adapters.append(adapter)
-
-
 
     async def publish(self, event: dict):
         """
