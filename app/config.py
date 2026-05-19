@@ -1,10 +1,19 @@
 """
 Configuration file for the Modbus application.
 Defines constants for MQTT, Modbus, and logging settings."""
+import os
 
-# MQTT
-MQTT_BROKER = "localhost"
-MQTT_PORT = 1883
+MQTT_BROKER = os.getenv(
+    "MQTT_BROKER",
+    "192.168.0.90"
+)
+
+MQTT_PORT = int(
+    os.getenv(
+        "MQTT_PORT",
+        1883
+    )
+)
 
 TOPIC_SUBSCRIBE = "device/modbus/in"
 TOPIC_PUBLISH = "device/modbus/out"
