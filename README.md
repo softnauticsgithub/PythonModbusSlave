@@ -1,4 +1,4 @@
-# Modbus Slave Application Docker Guide
+# Modbus Slave Application Guide
 
 This guide explains how to create and use a Docker image for the Python-based Modbus Slave application.
 
